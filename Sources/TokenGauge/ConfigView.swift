@@ -32,6 +32,12 @@ struct ConfigView: View {
                     }
                 }
                 .pickerStyle(.radioGroup)
+                Picker("用量显示方案", selection: $draft.usageDisplayScheme) {
+                    ForEach(UsageDisplayScheme.allCases, id: \.self) { scheme in
+                        Text(scheme.displayName).tag(scheme)
+                    }
+                }
+                .pickerStyle(.radioGroup)
                 Toggle("登录时打开", isOn: Binding(
                     get: { loginItem.isEnabled },
                     set: { loginItem.setEnabled($0) }
@@ -82,7 +88,7 @@ struct ConfigView: View {
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
-                Text("菜单栏第一行为 5 小时用量，第二行为周用量。" + colorLegend)
+                Text("菜单栏第一行为 5 小时用量，第二行为周用量；\n百分比数字为\(draft.usageDisplayScheme == .used ? "已使用" : "剩余")百分比。\n" + colorLegend)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -100,7 +106,7 @@ struct ConfigView: View {
         case .usage:
             return "按用量显示：已使用百分比 ≤30% 绿色，30%–70% 蓝色，>70% 红色。"
         case .progress:
-            return "按进度显示：菜单栏圆点按推算的周期结束用量配色，≤80% 绿色，80%–100% 蓝色，>100% 红色（需接口返回重置时间）；用量详情百分比按已使用百分比以同一区间配色。"
+            return "按进度显示：按当前消耗速率推算周期结束时的用量配色，≤80% 绿色，80%–100% 蓝色，>100% 红色；"
         }
     }
 }

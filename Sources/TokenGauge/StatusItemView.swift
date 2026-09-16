@@ -10,11 +10,13 @@ struct StatusItemView: View {
             UsageRow(
                 detail: state.usage?.fiveHour,
                 scheme: state.config.colorDisplayScheme,
+                usageScheme: state.config.usageDisplayScheme,
                 windowMinutes: UsageSummary.fiveHourWindowMinutes
             )
             UsageRow(
                 detail: state.usage?.weekly,
                 scheme: state.config.colorDisplayScheme,
+                usageScheme: state.config.usageDisplayScheme,
                 windowMinutes: UsageSummary.weeklyWindowMinutes
             )
         }
@@ -25,6 +27,7 @@ struct StatusItemView: View {
 private struct UsageRow: View {
     let detail: QuotaDetail?
     let scheme: ColorDisplayScheme
+    let usageScheme: UsageDisplayScheme
     let windowMinutes: Double
 
     var body: some View {
@@ -32,7 +35,7 @@ private struct UsageRow: View {
             Circle()
                 .fill(usageColor(for: detail, scheme: scheme, windowMinutes: windowMinutes))
                 .frame(width: 5.5, height: 5.5)
-            Text(detail.map { "\($0.percent)%" } ?? "--%")
+            Text(detail.map { "\($0.displayPercent(scheme: usageScheme))%" } ?? "--%")
                 .font(.system(size: 9, weight: .semibold, design: .rounded).monospacedDigit())
                 .foregroundStyle(Color(nsColor: .labelColor))
                 .lineLimit(1)
@@ -41,7 +44,8 @@ private struct UsageRow: View {
     }
 }
 
-/// 依颜色显示方案取色（菜单栏圆点）：按用量看已使用百分比，按进度看推算的周期结束用量
+/// 依颜色显示方案取色（菜单栏圆点与用量详情百分比文字同色）：
+/// 按用量看已使用百分比，按进度看推算的周期结束用量
 func usageColor(for detail: QuotaDetail?, scheme: ColorDisplayScheme, windowMinutes: Double) -> Color {
     switch scheme {
     case .usage:
@@ -49,12 +53,6 @@ func usageColor(for detail: QuotaDetail?, scheme: ColorDisplayScheme, windowMinu
     case .progress:
         return schemeColor(for: detail?.projectedPercent(windowMinutes: windowMinutes), scheme: scheme)
     }
-}
-
-/// 用量详情百分比文字的配色：文字展示的是已使用百分比，区间也作用于该数值本身，
-/// 保证颜色与所显示的数字按同一方案解读；按进度方案的推算值仅用于菜单栏圆点
-func detailPercentColor(for percent: Int?, scheme: ColorDisplayScheme) -> Color {
-    schemeColor(for: percent.map(Double.init), scheme: scheme)
 }
 
 /// 按方案的配色区间对百分比取色：按用量 [0,30] 绿、(30,70] 蓝、(70,∞) 红；

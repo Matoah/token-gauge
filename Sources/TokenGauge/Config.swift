@@ -15,6 +15,21 @@ enum ColorDisplayScheme: String, CaseIterable {
     }
 }
 
+/// 用量显示方案：百分比数字展示已使用还是剩余
+enum UsageDisplayScheme: String, CaseIterable {
+    /// 已使用百分比
+    case used
+    /// 剩余百分比
+    case remaining
+
+    var displayName: String {
+        switch self {
+        case .used: return "已使用百分比"
+        case .remaining: return "剩余百分比"
+        }
+    }
+}
+
 /// 用户配置，持久化到 UserDefaults
 struct Config: Equatable {
     var baseURL: String = ""
@@ -22,6 +37,7 @@ struct Config: Equatable {
     var timeoutSeconds: Int = 10
     var intervalMinutes: Int = 1   // 0 表示不自动查询
     var colorDisplayScheme: ColorDisplayScheme = .usage
+    var usageDisplayScheme: UsageDisplayScheme = .used
 
     private enum Keys {
         static let baseURL = "config.baseURL"
@@ -29,6 +45,7 @@ struct Config: Equatable {
         static let timeoutSeconds = "config.timeoutSeconds"
         static let intervalMinutes = "config.intervalMinutes"
         static let colorDisplayScheme = "config.colorDisplayScheme"
+        static let usageDisplayScheme = "config.usageDisplayScheme"
     }
 
     static func load() -> Config {
@@ -38,7 +55,8 @@ struct Config: Equatable {
             apiKey: defaults.string(forKey: Keys.apiKey) ?? "",
             timeoutSeconds: defaults.object(forKey: Keys.timeoutSeconds) as? Int ?? 10,
             intervalMinutes: defaults.object(forKey: Keys.intervalMinutes) as? Int ?? 1,
-            colorDisplayScheme: ColorDisplayScheme(rawValue: defaults.string(forKey: Keys.colorDisplayScheme) ?? "") ?? .usage
+            colorDisplayScheme: ColorDisplayScheme(rawValue: defaults.string(forKey: Keys.colorDisplayScheme) ?? "") ?? .usage,
+            usageDisplayScheme: UsageDisplayScheme(rawValue: defaults.string(forKey: Keys.usageDisplayScheme) ?? "") ?? .used
         )
     }
 
@@ -49,5 +67,6 @@ struct Config: Equatable {
         defaults.set(timeoutSeconds, forKey: Keys.timeoutSeconds)
         defaults.set(intervalMinutes, forKey: Keys.intervalMinutes)
         defaults.set(colorDisplayScheme.rawValue, forKey: Keys.colorDisplayScheme)
+        defaults.set(usageDisplayScheme.rawValue, forKey: Keys.usageDisplayScheme)
     }
 }

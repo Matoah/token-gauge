@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// 状态栏菜单顶部的「用量详情」区块：
-/// 分为 5 小时额度与周额度，各自展示已使用百分比、积分使用（currentValue/usage）与重置时间
+/// 分为 5 小时额度与周额度，各自展示百分比（已使用/剩余，依用量显示方案）、积分使用（currentValue/usage）与重置时间
 struct UsageDetailsMenuView: View {
     @ObservedObject var state: AppState
 
@@ -13,13 +13,17 @@ struct UsageDetailsMenuView: View {
             QuotaBlock(
                 title: "5小时额度",
                 detail: state.usage?.fiveHour,
-                scheme: state.config.colorDisplayScheme
+                scheme: state.config.colorDisplayScheme,
+                usageScheme: state.config.usageDisplayScheme,
+                windowMinutes: UsageSummary.fiveHourWindowMinutes
             )
             Divider()
             QuotaBlock(
                 title: "周额度",
                 detail: state.usage?.weekly,
-                scheme: state.config.colorDisplayScheme
+                scheme: state.config.colorDisplayScheme,
+                usageScheme: state.config.usageDisplayScheme,
+                windowMinutes: UsageSummary.weeklyWindowMinutes
             )
         }
         .padding(.horizontal, 14)
@@ -33,6 +37,8 @@ private struct QuotaBlock: View {
     let title: String
     let detail: QuotaDetail?
     let scheme: ColorDisplayScheme
+    let usageScheme: UsageDisplayScheme
+    let windowMinutes: Double
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
@@ -40,9 +46,10 @@ private struct QuotaBlock: View {
                 Text(title)
                     .font(.system(size: 13, weight: .semibold))
                 Spacer(minLength: 8)
-                Text(detail.map { "\($0.percent)%" } ?? "--%")
+                Text(detail.map { "\($0.displayPercent(scheme: usageScheme))%" } ?? "--%")
                     .font(.system(size: 13, weight: .semibold, design: .rounded).monospacedDigit())
-                    .foregroundStyle(detailPercentColor(for: detail?.percent, scheme: scheme))
+                    // 与菜单栏对应行圆点同色：配色始终基于实际用量（按进度方案取推算值），与所显数字方案无关
+                    .foregroundStyle(usageColor(for: detail, scheme: scheme, windowMinutes: windowMinutes))
             }
             Grid(alignment: .leading, horizontalSpacing: 10, verticalSpacing: 2) {
                 GridRow {

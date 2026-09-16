@@ -30,6 +30,14 @@ struct QuotaDetail: Equatable {
     var usage: Int
     var nextResetTime: Date?
 
+    /// 依用量显示方案返回展示用的百分比数字：已使用 / 剩余（超出额度时剩余为 0）
+    func displayPercent(scheme: UsageDisplayScheme) -> Int {
+        switch scheme {
+        case .used: return percent
+        case .remaining: return max(100 - percent, 0)
+        }
+    }
+
     /// 按进度显示方案的进度：以分钟粒度，按当前消耗速率推算整个周期结束时的用量百分比，可超过 100。
     /// 已使用时间（分钟）由「周期总长 − 距重置的剩余时间」倒推；缺少重置时间或总积分为 0 时无法推算，返回 nil
     func projectedPercent(windowMinutes: Double, now: Date = Date()) -> Double? {
