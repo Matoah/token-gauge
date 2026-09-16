@@ -10,12 +10,12 @@ struct StatusItemView: View {
             UsageRow(
                 detail: state.usage?.fiveHour,
                 scheme: state.config.colorDisplayScheme,
-                windowHours: UsageSummary.fiveHourWindowHours
+                windowMinutes: UsageSummary.fiveHourWindowMinutes
             )
             UsageRow(
                 detail: state.usage?.weekly,
                 scheme: state.config.colorDisplayScheme,
-                windowHours: UsageSummary.weeklyWindowHours
+                windowMinutes: UsageSummary.weeklyWindowMinutes
             )
         }
         .padding(.horizontal, 3)
@@ -25,12 +25,12 @@ struct StatusItemView: View {
 private struct UsageRow: View {
     let detail: QuotaDetail?
     let scheme: ColorDisplayScheme
-    let windowHours: Double
+    let windowMinutes: Double
 
     var body: some View {
         HStack(alignment: .center, spacing: 3) {
             Circle()
-                .fill(usageColor(for: detail, scheme: scheme, windowHours: windowHours))
+                .fill(usageColor(for: detail, scheme: scheme, windowMinutes: windowMinutes))
                 .frame(width: 5.5, height: 5.5)
             Text(detail.map { "\($0.percent)%" } ?? "--%")
                 .font(.system(size: 9, weight: .semibold, design: .rounded).monospacedDigit())
@@ -42,12 +42,12 @@ private struct UsageRow: View {
 }
 
 /// 依颜色显示方案取色：按用量看已使用百分比，按进度看推算的周期结束用量
-func usageColor(for detail: QuotaDetail?, scheme: ColorDisplayScheme, windowHours: Double) -> Color {
+func usageColor(for detail: QuotaDetail?, scheme: ColorDisplayScheme, windowMinutes: Double) -> Color {
     switch scheme {
     case .usage:
         return usageColor(for: detail?.percent)
     case .progress:
-        guard let progress = detail?.projectedPercent(windowHours: windowHours) else { return .gray }
+        guard let progress = detail?.projectedPercent(windowMinutes: windowMinutes) else { return .gray }
         // [0,80] 绿色；(80,100] 蓝色；(100,∞) 红色
         if progress <= 80 { return .green }
         if progress <= 100 { return .blue }

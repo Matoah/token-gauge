@@ -30,12 +30,12 @@ struct QuotaDetail: Equatable {
     var usage: Int
     var nextResetTime: Date?
 
-    /// 按进度显示方案的进度：以当前消耗速率推算整个周期结束时的用量百分比，可超过 100。
-    /// 已使用时间由「周期总长 − 距重置的剩余时间」倒推；缺少重置时间或总积分为 0 时无法推算，返回 nil
-    func projectedPercent(windowHours: Double, now: Date = Date()) -> Double? {
+    /// 按进度显示方案的进度：以分钟粒度，按当前消耗速率推算整个周期结束时的用量百分比，可超过 100。
+    /// 已使用时间（分钟）由「周期总长 − 距重置的剩余时间」倒推；缺少重置时间或总积分为 0 时无法推算，返回 nil
+    func projectedPercent(windowMinutes: Double, now: Date = Date()) -> Double? {
         guard usage > 0, let reset = nextResetTime else { return nil }
         guard currentValue > 0 else { return 0 }
-        let windowSeconds = windowHours * 3600
+        let windowSeconds = windowMinutes * 60
         // 数据过期（已过重置时间）时按整个周期作为已使用时间
         let remaining = reset.timeIntervalSince(now)
         let elapsed = min(max(windowSeconds - remaining, 1), windowSeconds)
@@ -45,9 +45,9 @@ struct QuotaDetail: Equatable {
 
 /// 从接口数据中提取的用量摘要
 struct UsageSummary: Equatable {
-    /// 周期总长（小时），用于按进度显示方案推算
-    static let fiveHourWindowHours: Double = 5
-    static let weeklyWindowHours: Double = 7 * 24
+    /// 周期总长（分钟），用于按进度显示方案推算
+    static let fiveHourWindowMinutes: Double = 5 * 60
+    static let weeklyWindowMinutes: Double = 7 * 24 * 60
 
     var fiveHour: QuotaDetail?
     var weekly: QuotaDetail?
