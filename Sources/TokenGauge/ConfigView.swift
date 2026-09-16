@@ -26,6 +26,12 @@ struct ConfigView: View {
             }
 
             Section("通用") {
+                Picker("颜色显示方案", selection: $draft.colorDisplayScheme) {
+                    ForEach(ColorDisplayScheme.allCases, id: \.self) { scheme in
+                        Text(scheme.displayName).tag(scheme)
+                    }
+                }
+                .pickerStyle(.radioGroup)
                 Toggle("登录时打开", isOn: Binding(
                     get: { loginItem.isEnabled },
                     set: { loginItem.setEnabled($0) }
@@ -76,7 +82,7 @@ struct ConfigView: View {
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
-                Text("菜单栏第一行为 5 小时用量，第二行为周用量。用量 ≤30% 显示绿点，30%–70% 蓝点，>70% 红点。")
+                Text("菜单栏第一行为 5 小时用量，第二行为周用量。" + colorLegend)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -85,6 +91,16 @@ struct ConfigView: View {
         .frame(minWidth: 480, minHeight: 430)
         .onAppear {
             draft = state.config
+        }
+    }
+
+    /// 配色说明，随所选颜色显示方案变化
+    private var colorLegend: String {
+        switch draft.colorDisplayScheme {
+        case .usage:
+            return "按用量显示：用量 ≤30% 绿点，30%–70% 蓝点，>70% 红点。"
+        case .progress:
+            return "按进度显示：按当前消耗速率推算周期结束时的用量，≤80% 绿点，80%–100% 蓝点，>100% 红点（需接口返回重置时间）。"
         }
     }
 }

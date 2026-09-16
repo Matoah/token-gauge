@@ -83,8 +83,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // 自定义子视图（NSHostingView）则始终保持高亮，与其它菜单栏图标不一致
         renderStatusImage()
 
-        // 数值变化后重新渲染
+        // 数值或配置（如颜色显示方案）变化后重新渲染
         state.$usage
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in self?.renderStatusImage() }
+            .store(in: &cancellables)
+        state.$config
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in self?.renderStatusImage() }
             .store(in: &cancellables)
