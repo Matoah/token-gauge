@@ -7,8 +7,8 @@ struct StatusItemView: View {
     var body: some View {
         // 菜单栏按钮可用高度约 22pt，内容必须控制在此以内，否则会被压缩裁切
         VStack(alignment: .leading, spacing: 0) {
-            UsageRow(percent: state.fiveHourPercent)
-            UsageRow(percent: state.weeklyPercent)
+            UsageRow(percent: state.usage?.fiveHourPercent)
+            UsageRow(percent: state.usage?.weeklyPercent)
         }
         .padding(.horizontal, 3)
     }
@@ -20,7 +20,7 @@ private struct UsageRow: View {
     var body: some View {
         HStack(alignment: .center, spacing: 3) {
             Circle()
-                .fill(color)
+                .fill(usageColor(for: percent))
                 .frame(width: 5.5, height: 5.5)
             Text(percent.map { "\($0)%" } ?? "--%")
                 .font(.system(size: 9, weight: .semibold, design: .rounded).monospacedDigit())
@@ -29,17 +29,12 @@ private struct UsageRow: View {
                 .fixedSize()
         }
     }
-
-    /// [0%,30%] 绿色；(30%,70%] 蓝色；(70%,100%] 红色
-    private var color: Color {
-        guard let percent, percent >= 0 else { return .gray }
-        if percent <= 30 { return .green }
-        if percent <= 70 { return .blue }
-        return .red
-    }
 }
 
-/// 点击事件穿透到 NSStatusBarButton，保证菜单能正常弹出
-final class PassthroughHostingView<Content: View>: NSHostingView<Content> {
-    override func hitTest(_ point: NSPoint) -> NSView? { nil }
+/// [0%,30%] 绿色；(30%,70%] 蓝色；(70%,100%] 红色；无数据灰色
+func usageColor(for percent: Int?) -> Color {
+    guard let percent, percent >= 0 else { return .gray }
+    if percent <= 30 { return .green }
+    if percent <= 70 { return .blue }
+    return .red
 }

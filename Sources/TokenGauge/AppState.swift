@@ -3,8 +3,7 @@ import Combine
 
 @MainActor
 final class AppState: ObservableObject {
-    @Published private(set) var fiveHourPercent: Int?
-    @Published private(set) var weeklyPercent: Int?
+    @Published private(set) var usage: UsageSummary?
     @Published private(set) var lastUpdate: Date?
     @Published private(set) var lastError: String?
     @Published private(set) var config: Config
@@ -46,8 +45,7 @@ final class AppState: ObservableObject {
             guard let self else { return }
             do {
                 let summary = try await self.service.fetch(config: cfg)
-                self.fiveHourPercent = summary.fiveHourPercent
-                self.weeklyPercent = summary.weeklyPercent
+                self.usage = summary
                 self.lastUpdate = Date()
                 self.lastError = nil
             } catch {

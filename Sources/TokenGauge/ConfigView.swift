@@ -1,10 +1,11 @@
 import SwiftUI
 
-/// 配置界面：请求地址 / API Key / 超时时间 / 自动查询间隔
+/// 配置界面：请求地址 / API Key / 超时时间 / 自动查询间隔 / 登录时打开
 struct ConfigView: View {
     @ObservedObject var state: AppState
 
     @State private var draft = Config()
+    @StateObject private var loginItem = LoginItemController()
 
     var body: some View {
         Form {
@@ -21,6 +22,29 @@ struct ConfigView: View {
                 }
                 Stepper(value: $draft.intervalMinutes, in: 0...1440) {
                     Text("自动查询间隔：\(draft.intervalMinutes) 分钟\(draft.intervalMinutes == 0 ? "（不自动查询）" : "")")
+                }
+            }
+
+            Section("通用") {
+                Toggle("登录时打开", isOn: Binding(
+                    get: { loginItem.isEnabled },
+                    set: { loginItem.setEnabled($0) }
+                ))
+                if loginItem.requiresApproval {
+                    HStack {
+                        Label("登录项待系统允许", systemImage: "exclamationmark.circle.fill")
+                            .foregroundStyle(.orange)
+                            .font(.callout)
+                        Button("前往系统设置") {
+                            loginItem.openSystemSettings()
+                        }
+                    }
+                }
+                if let error = loginItem.lastError {
+                    Label(error, systemImage: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.red)
+                        .font(.callout)
+                        .textSelection(.enabled)
                 }
             }
 

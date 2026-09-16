@@ -26,8 +26,9 @@ open "build/T·量.app"
 | API Key | 作为 `Authorization` 请求头发送 | 空（不发送） |
 | 超时时间(秒) | 请求超时 | 10 |
 | 自动查询间隔(分钟) | 定时刷新间隔，`0` 表示不自动查询 | 1 |
+| 登录时打开 | 注册为系统登录项，切换后立即生效 | 关 |
 
-配置持久化在 `UserDefaults`（域 `com.matoah.token-gauge`），修改后立即生效并触发一次刷新。
+前四项持久化在 `UserDefaults`（域 `com.matoah.token-gauge`），修改后立即生效并触发一次刷新；「登录时打开」通过 `SMAppService` 注册登录项，状态以系统登录项设置为准。
 
 ## 接口约定
 
@@ -59,5 +60,6 @@ open "build/T·量.app"
   - `AppState.swift` 配置 + 定时查询状态机
   - `UsageService.swift` / `UsageModels.swift` HTTP 请求与解析
   - `ConfigView.swift` 配置界面
+  - `LoginItem.swift` 「登录时打开」登录项注册（SMAppService）
 - `scripts/build-app.sh [debug|release]`：编译 + 组装 `.app`（Info.plist、图标、ad-hoc 签名）
 - `scripts/make-icon.sh`：由 `icon.svg` 生成 `AppIcon.icns`
