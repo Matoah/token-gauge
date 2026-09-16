@@ -13,15 +13,13 @@ struct UsageDetailsMenuView: View {
             QuotaBlock(
                 title: "5小时额度",
                 detail: state.usage?.fiveHour,
-                scheme: state.config.colorDisplayScheme,
-                windowMinutes: UsageSummary.fiveHourWindowMinutes
+                scheme: state.config.colorDisplayScheme
             )
             Divider()
             QuotaBlock(
                 title: "周额度",
                 detail: state.usage?.weekly,
-                scheme: state.config.colorDisplayScheme,
-                windowMinutes: UsageSummary.weeklyWindowMinutes
+                scheme: state.config.colorDisplayScheme
             )
         }
         .padding(.horizontal, 14)
@@ -35,7 +33,6 @@ private struct QuotaBlock: View {
     let title: String
     let detail: QuotaDetail?
     let scheme: ColorDisplayScheme
-    let windowMinutes: Double
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
@@ -45,7 +42,7 @@ private struct QuotaBlock: View {
                 Spacer(minLength: 8)
                 Text(detail.map { "\($0.percent)%" } ?? "--%")
                     .font(.system(size: 13, weight: .semibold, design: .rounded).monospacedDigit())
-                    .foregroundStyle(usageColor(for: detail, scheme: scheme, windowMinutes: windowMinutes))
+                    .foregroundStyle(detailPercentColor(for: detail?.percent, scheme: scheme))
             }
             Grid(alignment: .leading, horizontalSpacing: 10, verticalSpacing: 2) {
                 GridRow {

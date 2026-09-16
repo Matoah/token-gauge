@@ -41,24 +41,28 @@ private struct UsageRow: View {
     }
 }
 
-/// 依颜色显示方案取色：按用量看已使用百分比，按进度看推算的周期结束用量
+/// 依颜色显示方案取色（菜单栏圆点）：按用量看已使用百分比，按进度看推算的周期结束用量
 func usageColor(for detail: QuotaDetail?, scheme: ColorDisplayScheme, windowMinutes: Double) -> Color {
     switch scheme {
     case .usage:
-        return usageColor(for: detail?.percent)
+        return schemeColor(for: detail.map { Double($0.percent) }, scheme: scheme)
     case .progress:
-        guard let progress = detail?.projectedPercent(windowMinutes: windowMinutes) else { return .gray }
-        // [0,80] 绿色；(80,100] 蓝色；(100,∞) 红色
-        if progress <= 80 { return .green }
-        if progress <= 100 { return .blue }
-        return .red
+        return schemeColor(for: detail?.projectedPercent(windowMinutes: windowMinutes), scheme: scheme)
     }
 }
 
-/// 按用量显示：[0%,30%] 绿色；(30%,70%] 蓝色；(70%,100%] 红色；无数据灰色
-func usageColor(for percent: Int?) -> Color {
+/// 用量详情百分比文字的配色：文字展示的是已使用百分比，区间也作用于该数值本身，
+/// 保证颜色与所显示的数字按同一方案解读；按进度方案的推算值仅用于菜单栏圆点
+func detailPercentColor(for percent: Int?, scheme: ColorDisplayScheme) -> Color {
+    schemeColor(for: percent.map(Double.init), scheme: scheme)
+}
+
+/// 按方案的配色区间对百分比取色：按用量 [0,30] 绿、(30,70] 蓝、(70,∞) 红；
+/// 按进度 [0,80] 绿、(80,100] 蓝、(100,∞) 红；无数据或负值灰色
+private func schemeColor(for percent: Double?, scheme: ColorDisplayScheme) -> Color {
     guard let percent, percent >= 0 else { return .gray }
-    if percent <= 30 { return .green }
-    if percent <= 70 { return .blue }
+    let (greenMax, blueMax): (Double, Double) = scheme == .usage ? (30, 70) : (80, 100)
+    if percent <= greenMax { return .green }
+    if percent <= blueMax { return .blue }
     return .red
 }

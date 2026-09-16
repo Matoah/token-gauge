@@ -98,9 +98,9 @@ struct ConfigView: View {
     private var colorLegend: String {
         switch draft.colorDisplayScheme {
         case .usage:
-            return "按用量显示：用量 ≤30% 绿点，30%–70% 蓝点，>70% 红点。"
+            return "按用量显示：已使用百分比 ≤30% 绿色，30%–70% 蓝色，>70% 红色。"
         case .progress:
-            return "按进度显示：按当前消耗速率推算周期结束时的用量，≤80% 绿点，80%–100% 蓝点，>100% 红点（需接口返回重置时间）。"
+            return "按进度显示：菜单栏圆点按推算的周期结束用量配色，≤80% 绿色，80%–100% 蓝色，>100% 红色（需接口返回重置时间）；用量详情百分比按已使用百分比以同一区间配色。"
         }
     }
 }
