@@ -25,6 +25,9 @@ mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources"
 cp "$BIN" "$APP_DIR/Contents/MacOS/TokenGauge"
 cp "$ICNS" "$APP_DIR/Contents/Resources/AppIcon.icns"
 
+# 平台内置图标（菜单栏与配置页的平台标识）
+cp Assets/platform-icons/*.png "$APP_DIR/Contents/Resources/"
+
 cat > "$APP_DIR/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

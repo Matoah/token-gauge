@@ -81,3 +81,104 @@ struct UsageSummary: Equatable {
         return Date(timeIntervalSince1970: seconds)
     }
 }
+
+// MARK: - DeepSeek 余额
+
+/// DeepSeek 余额接口响应
+struct BalanceResponse: Decodable {
+    let isAvailable: Bool
+    let balanceInfos: [BalanceInfo]
+
+    enum CodingKeys: String, CodingKey {
+        case isAvailable = "is_available"
+        case balanceInfos = "balance_infos"
+    }
+}
+
+struct BalanceInfo: Decodable {
+    let currency: String
+    let totalBalance: String
+    let grantedBalance: String
+    let toppedUpBalance: String
+
+    enum CodingKeys: String, CodingKey {
+        case currency
+        case totalBalance = "total_balance"
+        case grantedBalance = "granted_balance"
+        case toppedUpBalance = "topped_up_balance"
+    }
+}
+
+/// 余额三档配色区间（对应低余额阈值）
+enum BalanceColorBand {
+    /// 余额 ≤ 阈值
+    case low
+    /// 阈值 < 余额 ≤ 3×阈值
+    case nearing
+    /// 余额 > 3×阈值
+    case plenty
+}
+
+/// 从余额接口数据中提取的余额摘要（金额为账户币种，DeepSeek 为 CNY）
+struct BalanceSummary: Equatable {
+    var currency: String
+    var total: Double
+    var granted: Double
+    var toppedUp: Double
+    var isAvailable: Bool
+
+    init?(from response: BalanceResponse) {
+        // DeepSeek 实际只返回 CNY；防御性取 CNY 条目，否则取第一条
+        guard let info = response.balanceInfos.first(where: { $0.currency == "CNY" })
+                ?? response.balanceInfos.first,
+              let total = Self.amount(info.totalBalance),
+              let granted = Self.amount(info.grantedBalance),
+              let toppedUp = Self.amount(info.toppedUpBalance) else { return nil }
+        currency = info.currency
+        self.total = total
+        self.granted = granted
+        self.toppedUp = toppedUp
+        isAvailable = response.isAvailable
+    }
+
+    /// 币种符号；未知币种为空（数字前直接显示原币种代码的场景由详情页承担）
+    var currencySymbol: String {
+        switch currency {
+        case "CNY": return "¥"
+        case "USD": return "$"
+        default: return ""
+        }
+    }
+
+    /// 菜单栏 / 详情标题行的显示文本，如「¥25.91」；非 CNY/USD 时前缀币种代码如「EUR 25.91」
+    var displayText: String {
+        let amount = Self.amountText(total)
+        return currencySymbol.isEmpty ? "\(currency) \(amount)" : currencySymbol + amount
+    }
+
+    /// 依低余额阈值取配色区间
+    func colorBand(threshold: Double) -> BalanceColorBand {
+        if total <= threshold { return .low }
+        if total <= threshold * 3 { return .nearing }
+        return .plenty
+    }
+
+    private static func amount(_ text: String) -> Double? {
+        Double(text.trimmingCharacters(in: .whitespaces))
+    }
+
+    /// 金额文本：固定两位小数 + "," 千分位（不随系统语言变化）
+    static func amountText(_ value: Double) -> String {
+        amountFormatter.string(from: NSNumber(value: value)) ?? String(format: "%.2f", value)
+    }
+
+    private static let amountFormatter: NumberFormatter = {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.usesGroupingSeparator = true
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.minimumFractionDigits = 2
+        formatter.maximumFractionDigits = 2
+        return formatter
+    }()
+}

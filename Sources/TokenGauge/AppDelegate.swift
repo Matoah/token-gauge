@@ -83,12 +83,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // 自定义子视图（NSHostingView）则始终保持高亮，与其它菜单栏图标不一致
         renderStatusImage()
 
-        // 数值或配置（如颜色显示方案）变化后重新渲染
-        state.$usage
-            .receive(on: RunLoop.main)
-            .sink { [weak self] _ in self?.renderStatusImage() }
-            .store(in: &cancellables)
-        state.$config
+        // 数值、配置、轮播帧等任何状态变化后重新渲染
+        state.objectWillChange
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in self?.renderStatusImage() }
             .store(in: &cancellables)
@@ -104,7 +100,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func renderStatusImage() {
         guard let button = statusItem?.button else { return }
         let isDark = Self.isDarkAppearance(button.effectiveAppearance)
-        let content = StatusItemView(state: state)
+        // 宽度固定为各启用平台帧的最大宽度：轮播切帧时状态项宽度不变，不挤动相邻图标
+        let frameWidth = Self.maxFrameWidth(state: state, isDark: isDark)
+        let content = StatusFrameView(state: state)
+            .frame(width: frameWidth > 0 ? frameWidth : nil, alignment: .leading)
             .environment(\.colorScheme, isDark ? .dark : .light)
 
         // 生成 1x/2x 两档位图：NSImage 绘制时按目标屏幕的 backing scale
@@ -147,10 +146,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
     }
 
-    /// 按图像宽度调整状态项长度，保证百分比完整显示
+    /// 逐平台以 1x 渲染取最大帧宽（无启用平台时按占位帧）；渲染失败返回 0
+    private static func maxFrameWidth(state: AppState, isDark: Bool) -> CGFloat {
+        let platforms = state.config.enabledPlatforms
+        let candidates: [Platform?] = platforms.isEmpty ? [nil] : platforms.map { Optional($0) }
+        var maxWidth: CGFloat = 0
+        for platform in candidates {
+            let renderer = ImageRenderer(
+                content: StatusFrameView(state: state, platform: platform)
+                    .environment(\.colorScheme, isDark ? .dark : .light)
+            )
+            renderer.scale = 1
+            guard let cg = renderer.cgImage else { continue }
+            maxWidth = max(maxWidth, CGFloat(cg.width))
+        }
+        return maxWidth
+    }
+
+    /// 按图像宽度调整状态项长度：+8 即内容左右各留 4pt 边距
     private func updateStatusItemLength() {
         guard let button = statusItem?.button, let image = button.image, let item = statusItem else { return }
-        item.length = image.size.width + 8  // 左右各留少量边距
+        item.length = image.size.width + 8
     }
 
     // MARK: - 配置窗口
