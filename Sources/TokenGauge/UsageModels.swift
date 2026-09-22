@@ -39,10 +39,12 @@ struct QuotaDetail: Equatable {
     }
 
     /// 按进度显示方案的进度：以分钟粒度，按当前消耗速率推算整个周期结束时的用量百分比，可超过 100。
-    /// 已使用时间（分钟）由「周期总长 − 距重置的剩余时间」倒推；缺少重置时间或总积分为 0 时无法推算，返回 nil
+    /// 已使用时间（分钟）由「周期总长 − 距重置的剩余时间」倒推；总积分为 0、或已消耗但缺少重置时间时无法推算，返回 nil。
+    /// 未消耗（currentValue = 0）推算必为 0%，无需重置时间（智谱对未使用窗口不返回 nextResetTime）
     func projectedPercent(windowMinutes: Double, now: Date = Date()) -> Double? {
-        guard usage > 0, let reset = nextResetTime else { return nil }
+        guard usage > 0 else { return nil }
         guard currentValue > 0 else { return 0 }
+        guard let reset = nextResetTime else { return nil }
         let windowSeconds = windowMinutes * 60
         // 数据过期（已过重置时间）时按整个周期作为已使用时间
         let remaining = reset.timeIntervalSince(now)
